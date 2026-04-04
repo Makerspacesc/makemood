@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Makerspace PWG — Startseite (Modal Popup Fullscreen)</title>
+  <meta name="description" content="Makerspace PWG – Interaktive Einzelseite mit Fullscreen-Poster-Popup." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-1:#f6f9ff; --bg-2:#eef5ff;
+      --blue-100:#dbe9ff; --blue-300:#7ea6ff; --blue-600:#234a8a;
+      --accent:#1e6fe6; --text:#0f1724; --muted:#6b7280;
+      --radius:12px; --max-width:1100px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      color:var(--text); background:linear-gradient(180deg,var(--bg-1),#fff 50%);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      line-height:1.45; scroll-behavior:smooth;
+    }
+    .wrap{max-width:var(--max-width);margin:0 auto;padding:0 20px;}
+
+    /* Header */
+    header{position:sticky;top:0;z-index:80;background:rgba(255,255,255,0.85);backdrop-filter:blur(6px);border-bottom:1px solid rgba(35,74,138,0.06)}
+    .header-inner{display:flex;align-items:center;justify-content:space-between;padding:12px 0;gap:1rem}
+    .brand{display:flex;align-items:center;gap:.75rem}
+    .logo{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--blue-100),var(--blue-300));display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+    nav{display:flex;gap:.5rem;align-items:center}
+    .nav-link{padding:.45rem .7rem;border-radius:10px;text-decoration:none;color:var(--blue-600);font-weight:600;cursor:pointer}
+    .nav-link.active{background:linear-gradient(90deg,var(--blue-100),var(--bg-2));box-shadow:0 8px 20px rgba(35,74,138,0.06)}
+    .cta{background:var(--accent);color:#fff;padding:.5rem .9rem;border-radius:12px;font-weight:700;text-decoration:none;box-shadow:0 10px 30px rgba(30,111,230,0.12)}
+
+    /* Hero (kein Oval mehr) */
+    .hero{padding:72px 0 48px}
+    .hero-card{background:linear-gradient(180deg,#fff,var(--bg-2));border-radius:18px;padding:28px;border:1px solid rgba(35,74,138,0.04);box-shadow:0 18px 40px rgba(15,23,36,0.04);display:flex;gap:20px;align-items:center}
+    .hero-left{flex:1}
+    .kicker{font-weight:700;color:var(--blue-600);font-size:.95rem}
+    .hero-title{font-size:2.4rem;margin:6px 0 0;line-height:1.02;font-weight:800}
+    .hero-sub{font-size:1.05rem;color:var(--muted);font-style:italic;margin-top:6px}
+    .hero-actions{margin-top:14px;display:flex;gap:.6rem;align-items:center}
+
+    /* Sections */
+    section.rubrik{padding:64px 0;scroll-margin-top:96px}
+    .section-inner{display:grid;grid-template-columns:1fr;gap:20px;align-items:start}
+    .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+    .card{background:#fff;border-radius:14px;padding:18px;border-left:6px solid var(--blue-600);box-shadow:0 10px 30px rgba(15,23,36,0.04);transition:transform .18s ease}
+    .card:hover{transform:translateY(-6px)}
+    .lead{font-size:1.05rem;font-weight:600}
+    .muted{color:var(--muted)}
+    .italic{font-style:italic}
+    .big{font-size:1.15rem;font-weight:800}
+    .small{font-size:.9rem;color:var(--muted)}
+
+    /* Fullscreen Popup Modal */
+    .modal-overlay{
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+      background:rgba(6,12,30,0.6);z-index:200;padding:20px;
+    }
+    .modal-overlay.visible{display:flex}
+    .modal-content{
+      width:100%;max-width:1200px;height:100%;max-height:100%;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;
+    }
+    .modal-img{
+      max-width:calc(100% - 80px);max-height:calc(100% - 80px);width:auto;height:auto;border-radius:10px;box-shadow:0 30px 80px rgba(2,6,23,0.6);object-fit:contain;
+      background:#fff;padding:8px;border:1px solid rgba(255,255,255,0.06);
+    }
+    .modal-close{
+      position:absolute;top:18px;right:18px;background:rgba(255,255,255,0.9);border:0;border-radius:10px;padding:8px 10px;font-weight:700;cursor:pointer;z-index:210;
+      box-shadow:0 8px 20px rgba(2,6,23,0.2);
+    }
+    .modal-caption{position:absolute;left:24px;bottom:24px;color:#fff;font-size:1rem;background:linear-gradient(90deg,rgba(0,0,0,0.35),transparent);padding:8px 12px;border-radius:8px}
+
+    /* Reveal */
+    .reveal{opacity:0;transform:translateY(12px);transition:opacity .6s ease,transform .6s ease}
+    .reveal.visible{opacity:1;transform:none}
+    @media (prefers-reduced-motion: reduce){ .reveal{transition:none} }
+
+    /* Responsive */
+    @media(min-width:900px){ .section-inner{grid-template-columns:1fr 360px} .hero-title{font-size:3rem} }
+    @media(max-width:520px){ .hero-title{font-size:1.6rem} .nav-link{font-size:.9rem;padding:.4rem .6rem} }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="wrap header-inner" role="banner" aria-label="Hauptnavigation">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">MS</div>
+        <div>
+          <h1>Makerspace PWG</h1>
+          <p class="small">Kreativ. Technisch. Gemeinsam.</p>
+        </div>
+      </div>
+
+      <nav role="navigation" aria-label="Sektionen">
+        <a class="nav-link active" data-target="start" href="#start">Start</a>
+        <a class="nav-link" data-target="about" href="#about">Über uns</a>
+        <a class="nav-link" data-target="angebote" href="#angebote">Angebote</a>
+        <a class="nav-link" data-target="oeffnungszeiten" href="#oeffnungszeiten">Öffnungszeiten</a>
+        <a class="nav-link" data-target="kontakt" href="#kontakt">Kontakt</a>
+        <a class="cta" href="#kontakt">Jetzt kontaktieren</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap" id="maincontent">
+    <!-- HERO -->
+    <section id="start" class="rubrik" aria-labelledby="start-title">
+      <div class="hero-card reveal">
+        <div class="hero-left">
+          <div class="kicker">Willkommen</div>
+          <h2 id="start-title" class="hero-title">Makerspace PWG — Raum für Ideen und Technik</h2>
+          <p class="hero-sub italic">Ein Ort, an dem Schülerinnen und Schüler mit Werkzeugen, Elektronik und Software experimentieren.</p>
+          <div class="hero-actions">
+            <a class="cta" href="#angebote">Angebote ansehen</a>
+            <a class="nav-link" href="#about">Mehr erfahren</a>
+          </div>
+        </div>
+
+        <aside style="width:320px;">
+          <div style="background:linear-gradient(180deg,#fff,var(--bg-2));padding:12px;border-radius:12px;border:1px solid rgba(35,74,138,0.04)">
+            <h3 class="big" style="margin:0 0 .25rem">Kurzinfo</h3>
+            <p class="muted" style="margin:0">Workshops, offene Werkstatt, Projektbetreuung und Zertifikate.</p>
+            <p class="small" style="margin-top:8px"><strong>Makercard</strong> nach Abschluss aller Workshops.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ÜBER UNS -->
+    <section id="about" class="rubrik" aria-labelledby="about-title">
+      <div class="section-inner">
+        <div>
+          <h2 id="about-title">Über den Makerspace</h2>
+          <p class="lead italic">Unsere Mission ist es, Neugier zu wecken und technische Kompetenzen praktisch zu vermitteln.</p>
+
+          <div class="card-grid" style="margin-top:16px">
+            <article class="card reveal"><h3>Vision</h3><p>Ein offener Raum, in dem Ideen wachsen.</p></article>
+            <article class="card reveal"><h3>Team</h3><p>Lehrkräfte und engagierte Schüler*innen begleiten Workshops.</p></article>
+            <article class="card reveal"><h3>Ausstattung</h3><p>3D-Drucker, Laser, Holzwerkstatt, Elektronik-Arbeitsplätze.</p></article>
+          </div>
+        </div>
+
+        <aside>
+          <div class="card contact-card reveal">
+            <strong>Kurzkontakt</strong>
+            <a href="mailto:Makerspace@makerpeople.test">Makerspace@makerpeople.test</a>
+            <div class="small muted">Oder sprich uns persönlich an — wir sind offen für Ideen.</div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ANGEBOTE -->
+    <section id="angebote" class="rubrik" aria-labelledby="angebote-title">
+      <div class="section-inner">
+        <div>
+          <h2 id="angebote-title">Angebote</h2>
+          <p class="lead">Workshops und Kurse für Einsteiger und Fortgeschrittene.</p>
+
+          <div class="card-grid" style="margin-top:16px">
+            <article class="card reveal"><h3>Einsteigerkurse</h3><p>Grundlagen 3D-Druck, Elektronik, Holzprojekte.</p></article>
+            <article class="card reveal"><h3>Vertiefung</h3><p>Robotik, CAD-Design, Lasergravur.</p></article>
+            <article class="card reveal"><h3>Zertifikate</h3><p>Makercard nach Abschluss bestimmter Module.</p></article>
+          </div>
+        </div>
+
+        <aside>
+          <div class="card contact-card reveal">
+            <h3 class="small">Nächster Workshop</h3>
+            <p class="muted">Termine werden im Schulkalender veröffentlicht.</p>
+            <a class="nav-link" href="#kontakt">Anmelden</a>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ÖFFNUNGSZEITEN -->
+    <section id="oeffnungszeiten" class="rubrik" aria-labelledby="oeffnungszeiten-title">
+      <div class="section-inner">
+        <div class="reveal">
+          <h2 id="oeffnungszeiten-title">Öffnungszeiten</h2>
+          <p class="lead italic">Der Makerspace ist wöchentlich an mindestens zwei Nachmittagen geöffnet.</p>
+
+          <div class="card" style="margin-top:12px"><h3>Regelmäßige Zeiten</h3><p class="muted">Montag 15:00–17:30; Donnerstag 14:30–17:00; zusätzliche Termine nach Ankündigung.</p></div>
+        </div>
+
+        <aside class="reveal">
+          <div class="card contact-card"><strong>Besuch planen</strong><p class="small muted">Schreib uns eine Mail oder komm vorbei.</p><a href="#kontakt" class="nav-link">Kontakt</a></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- KONTAKT -->
+    <section id="kontakt" class="rubrik" aria-labelledby="kontakt-title">
+      <div class="section-inner">
+        <div class="reveal">
+          <h2 id="kontakt-title">Kontakt</h2>
+          <p class="lead">So erreichst du uns</p>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Schreib uns</h3>
+            <p><strong>Email</strong> <a href="mailto:Makerspace@makerpeople.test">Makerspace@makerpeople.test</a></p>
+            <p><strong>Telefon</strong> <span class="muted">+49 123 456 789</span></p>
+            <p class="small italic muted">Oder sprich uns in der Schule an — wir freuen uns auf Projekte.</p>
+          </div>
+        </div>
+
+        <aside class="reveal">
+          <div class="card contact-card"><strong>Adresse</strong><p class="small muted">PWG Schule, Makerspace Raum</p><a class="nav-link" href="#start">Zurück nach oben</a></div>
+        </aside>
+      </div>
+    </section>
+
+    <footer style="padding:28px 0;border-top:1px solid rgba(35,74,138,0.06);margin-top:40px;text-align:center;color:var(--muted)">© 2026 Makerspace PWG — Alle Rechte vorbehalten</footer>
+  </main>
+
+  <!-- Fullscreen Modal Popup -->
+  <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Makerspace Poster Dialog">
+    <div class="modal-content" role="document">
+      <!-- Passe src an, falls nötig -->
+      <img id="modalImage" class="modal-img" src="poster.jpg" alt="Makerspace Poster" loading="eager" decoding="async">
+      <button id="modalClose" class="modal-close" aria-label="Schließen">✕</button>
+      <div class="modal-caption">Wir bauen einen Makerspace — hilf mit Werkzeugen oder Materialien.</div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      // Navigation & ScrollSpy
+      const navLinks = document.querySelectorAll('.nav-link[data-target]');
+      function setActiveById(id){ navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('data-target') === id)); }
+      navLinks.forEach(a => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          const id = a.getAttribute('data-target');
+          const el = document.getElementById(id);
+          if(el){ el.scrollIntoView({behavior:'smooth',block:'start'}); el.setAttribute('tabindex','-1'); el.focus({preventScroll:true}); setTimeout(()=>el.removeAttribute('tabindex'),800); }
+        });
+      });
+
+      // ScrollSpy observer
+      const spyObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => { if(entry.isIntersecting) setActiveById(entry.target.id); });
+      }, {root:null,rootMargin:'-30% 0px -50% 0px',threshold:0});
+      document.querySelectorAll('section.rubrik').forEach(s => spyObserver.observe(s));
+
+      // Reveal animations
+      const revealEls = document.querySelectorAll('.reveal');
+      const revealObserver = new IntersectionObserver((entries, obs) => {
+        entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); } });
+      }, {root:null,threshold:0.12});
+      revealEls.forEach(el => revealObserver.observe(el));
+
+      // Modal popup logic (fullscreen)
+      const modal = document.getElementById('modalOverlay');
+      const modalImg = document.getElementById('modalImage');
+      const modalClose = document.getElementById('modalClose');
+      const trigger = document.getElementById('about');
+      const hideTarget = document.getElementById('angebote');
+      let modalVisible = false;
+      let manuallyClosed = false;
+      let lastFocused = null;
+
+      function openModal(){
+        if(manuallyClosed) return;
+        lastFocused = document.activeElement;
+        modal.classList.add('visible');
+        modal.setAttribute('aria-hidden','false');
+        modal.style.display = 'flex';
+        modalVisible = true;
+        // focus management
+        modalClose.focus();
+        // prevent background scroll
+        document.documentElement.style.overflow = 'hidden';
+      }
+      function closeModal(){
+        modal.classList.remove('visible');
+        modal.setAttribute('aria-hidden','true');
+        modal.style.display = 'none';
+        modalVisible = false;
+        document.documentElement.style.overflow = '';
+        if(lastFocused) lastFocused.focus();
+      }
+
+      // Observe trigger to open modal
+      if(trigger){
+        const tObs = new IntersectionObserver((entries) => {
+          entries.forEach(e => {
+            if(e.isIntersecting && e.intersectionRatio > 0.25){
+              openModal();
+            } else {
+              // if leaving upward, close
+              if(e.boundingClientRect.top > 0) closeModal();
+            }
+          });
+        }, {root:null,threshold:[0.25]});
+        tObs.observe(trigger);
+      }
+
+      // Observe hideTarget to close modal when user scrolls further
+      if(hideTarget){
+        const hObs = new IntersectionObserver((entries) => {
+          entries.forEach(e => { if(e.isIntersecting && e.intersectionRatio > 0.25) closeModal(); });
+        }, {root:null,threshold:[0.25]});
+        hObs.observe(hideTarget);
+      }
+
+      // Manual close
+      modalClose.addEventListener('click', () => { closeModal(); manuallyClosed = true; });
+
+      // Close on Escape
+      document.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape' && modalVisible){ closeModal(); manuallyClosed = true; }
+      });
+
+      // Click outside image closes modal
+      modal.addEventListener('click', (e) => {
+        if(e.target === modal) { closeModal(); manuallyClosed = true; }
+      });
+
+      // Ensure image loads; if it fails, hide modal and log
+      modalImg.addEventListener('error', () => {
+        console.warn('Poster image konnte nicht geladen werden. Bitte prüfen Sie den Pfad oder Dateinamen.');
+        closeModal();
+      });
+
+      // On load: if hash present, scroll to it
+      window.addEventListener('load', () => {
+        if(location.hash){
+          const id = location.hash.replace('#','');
+          const el = document.getElementById(id);
+          if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
